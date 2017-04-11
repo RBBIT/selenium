@@ -22,25 +22,25 @@ require File.expand_path('../../spec_helper', __FILE__)
 module Selenium
   module WebDriver
     module Firefox
-      describe W3CBridge do
-        let(:launcher) { double(Launcher, launch: nil, quit: nil, url: 'http://localhost:4444/wd/hub') }
-        let(:resp) { { 'value' => {'sessionId' => 'foo', 'value' => @default_capabilities} } }
-        let(:http) { double(Remote::Http::Default, call: resp).as_null_object }
-        let(:caps) { Remote::Capabilities.chrome }
+      describe Driver do
+        let(:launcher) { instance_double(Launcher).as_null_object }
+        let(:service) { instance_double(Service).as_null_object }
 
         before do
-          @default_capabilities = Remote::Capabilities.firefox.as_json
-          allow(Remote::Capabilities).to receive(:firefox).and_return(caps)
+          expect(Remote::Bridge).to receive(:handshake)
           allow(Launcher).to receive(:new).and_return(launcher)
+          allow(Service).to receive(:new).and_return(service)
         end
 
-        it 'accepts server URL' do
-          expect(Service).not_to receive(:new)
-          expect(http).to receive(:server_url=).with(URI.parse('http://example.com:4321'))
-
-          W3CBridge.new(http_client: http, url: 'http://example.com:4321')
+        it 'is marionette driver by default' do
+          driver = Driver.new
+          expect(driver).to be_a(Marionette::Driver)
         end
 
+        it 'is legacy driver when asked for' do
+          driver = Driver.new(marionette: false)
+          expect(driver).to be_a(Legacy::Driver)
+        end
       end
     end # Firefox
   end # WebDriver
